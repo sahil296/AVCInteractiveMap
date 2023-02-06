@@ -227,12 +227,7 @@ public class MapsFragment extends Fragment {
     };
 
     public static boolean enableCircleFilter() {
-        // 1) Determine user's current location
-        // 2) Pass that info. to the nearest location calculator
-        // 3) The nearest location calculator checks user's location to all other locations, determines
-        //    which are closest based on a predetermined radius around a user
         enableCircleFilter = !enableCircleFilter;
-        Log.d("TEST", "Current Value: " + enableCircleFilter);
         return enableCircleFilter;
     }
 
@@ -278,6 +273,8 @@ public class MapsFragment extends Fragment {
         mLocationRequest.setFastestInterval(1000);
 
 
+        // FIXME: - Location filters cannot be applied when circle filter is active
+        //        -
         // Adds the locations circle filter feature (https://guides.codepath.com/android/Retrieving-Location-with-LocationServices-API)
         getFusedLocationProviderClient(this.requireActivity()).requestLocationUpdates(mLocationRequest, new LocationCallback() {
             @SuppressLint("MissingPermission")
@@ -310,7 +307,21 @@ public class MapsFragment extends Fragment {
                     for (Marker marker : locations.keySet()) {
                         if (SphericalUtil.computeDistanceBetween(marker.getPosition(), previousCircle.getCenter()) <= previousCircle.getRadius()) {
                             marker.setVisible(true);
-                        } else {
+                        }
+                        else if(MainActivity.showParkingLots) { // Checks if the parking lots filter is checked
+
+                            // FIXME: this method of checking the marker type results in a major performance hit
+                            //        it's essentially using a double for loop with around
+                            // Stores the current marker's type
+                            String markerType = getMarkerType(marker);
+
+                            // Checks if it's a lot marker
+                            if(markerType.equals("parking")) {
+                                marker.setVisible(true);
+                            }
+
+                        }
+                        else {
                             marker.setVisible(false);
                         }
                     }
@@ -339,6 +350,38 @@ public class MapsFragment extends Fragment {
             }, Looper.myLooper());
 
 
+    }
+
+    private String getMarkerType(Marker marker) {
+
+        // Open json file
+        InputStream jsonData = getResources().openRawResource(R.raw.locations);
+        Scanner scnr = new Scanner(jsonData);
+        StringBuilder builder = new StringBuilder();
+
+        // Build json string
+        while (scnr.hasNextLine()) {
+            builder.append(scnr.nextLine());
+        }
+
+        // Parse json into objects
+        try {
+            JSONArray root = new JSONArray(builder.toString());
+
+            for (int i = 0; i < root.length(); i++) {
+                JSONObject location = root.getJSONObject(i);
+                String title = location.getString("title");
+                String locationType = location.getString("type");
+
+                if(marker.getTitle().equals(title)) {
+                    return locationType;
+                }
+
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     // Permission Request for GPS

@@ -49,7 +49,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     private boolean mLocationPermissionGranted = false;
 
     // Booleans for determining the visibility of markers
-    private boolean showParkingLots = false;
+    public static boolean showParkingLots = false;
     private boolean showClassrooms = false;
     private boolean showStudentResources = false;
     private boolean showFood = false;
@@ -84,6 +84,8 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             return true;
         });
 
+        // FIXME: Switch is able to be clicked and no action occurs. When item is clicked is when an action occurs.
+        //        Probably have to use an icon instead of an actual switch
         // Initiates method to determine the nearest markers based on the user's current location
         MenuItem locationsNearUserButton = nav.getMenu().findItem(R.id.locations_near_me);
         // Sets initial state of swtich as unchecked
